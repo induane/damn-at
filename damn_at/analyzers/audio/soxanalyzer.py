@@ -1,33 +1,45 @@
-'''Analyzer for audio files using sox'''
+"""Analyzer for audio files using sox"""
+# Standard
 import os
-import subprocess
 import re
 import mimetypes
+import subprocess
 
-from damn_at import AssetId, FileId, FileDescription, AssetDescription
-from damn_at import MetaDataValue, MetaDataType
+# Damn
+from damn_at import (
+    AssetId,
+    FileId,
+    FileDescription,
+    AssetDescription,
+    MetaDataValue,
+    MetaDataType
+)
 from damn_at.pluginmanager import IAnalyzer
 #from damn.util import ExecutableDependencies
 
 #ExecutableDependencies(['sox'])
 
+
 def get_sox_types():
-    '''Extract all possible formats for the audio file and store their mime
-    types'''
+    """
+    Extract all possible formats for the audio file and store their mime
+    types
+    """
     try:
-        pro = subprocess.Popen(['sox', '-h'], stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+        pro = subprocess.Popen(['sox', '-h'],
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
         out, err = pro.communicate()
         if pro.returncode != 0:
-            print("E: GetSoxTypes failed with error code %d! "%(pro.returncode),
-                    out, err)
+            print("E: GetSoxTypes failed with error code %d! " % (
+                pro.returncode), out, err)
             return []
     except OSError as oserror:
         print("E: GetSoxTypes failed!", oserror)
         return []
 
     match = re.search(r'AUDIO FILE FORMATS:(.*)PLAYLIST FORMATS',
-            out, re.DOTALL)
+                      out, re.DOTALL)
     if not match:
         print("E: GetSoxTypes failed to parse output!", out, err)
         return []
@@ -35,14 +47,16 @@ def get_sox_types():
     extensions = match.group(1).strip().split(' ')
     mimes = []
     for ext in extensions:
-        mime = mimetypes.guess_type('file.'+ext, False)[0]
-        if mime and mime.startswith('audio/'): mimes.append(mime)
+        mime = mimetypes.guess_type('file.' + ext, False)[0]
+        if mime and mime.startswith('audio/'):
+            mimes.append(mime)
     return mimes
 
+
 class SoundAnalyzer(IAnalyzer):
-    '''class for sound analyzer called in the analyzer'''
-    
+    """class for sound analyzer called in the analyzer"""
     handled_types = get_sox_types()
+
     def __init__(self):
         IAnalyzer.__init__(self)
 
@@ -50,24 +64,26 @@ class SoundAnalyzer(IAnalyzer):
         pass
 
     def analyze(self, anURI):
-        fileid = FileId(filename=os.path.abspath(anURI)) 
+        fileid = FileId(filename=os.path.abspath(anURI))
         file_descr = FileDescription(file=fileid)
         file_descr.assets = []
 
-        asset_descr = AssetDescription(asset=
-        AssetId(subname=os.path.basename(anURI), 
-            mimetype=mimetypes.guess_type(anURI, False)[0], file=fileid))
+        asset_descr = AssetDescription(
+            asset=AssetId(subname=os.path.basename(anURI),
+                          mimetype=mimetypes.guess_type(anURI, False)[0],
+                          file=fileid))
 
         try:
-            pro = subprocess.Popen(['sox', '--i', anURI], stdout=subprocess.PIPE, 
-                    stderr=subprocess.PIPE)
+            pro = subprocess.Popen(['sox', '--i', anURI],
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
             out, err = pro.communicate()
             if pro.returncode != 0:
-                print("E: SoundAnalyzer failed %swith error code %d! "%(anURI,
-                    pro.returncode), out, err)
+                print("E: SoundAnalyzer failed %swith error code %d! " % (
+                    anURI, pro.returncode), out, err)
                 return False
         except OSError:
-            print("E: SoundAnalyzer failed %s!"%(anURI), out, err)
+            print("E: SoundAnalyzer failed %s!" % (anURI), out, err)
             return False
 
         meta = {}
@@ -77,18 +93,16 @@ class SoundAnalyzer(IAnalyzer):
             if len(line) == 1:
                 line = line[0].split('=')
             line = [l.strip() for l in line]
-            if line[0] in ['Input File', 'Comment']: continue
+            if line[0] in ['Input File', 'Comment']:
+                continue
             meta[line[0].lower().replace(' ', '_')] = line[1]
 
-        
         from damn_at.analyzers.audio import metadata
         asset_descr.metadata = metadata.MetaDataSox.extract(meta)
         for key, value in meta.items():
             #Add none default metadata.
             if key not in asset_descr.metadata:
-                asset_descr.metadata['Sox-'+key] = MetaDataValue(type=MetaDataType.STRING, string_value=value)
-        
-        
-        file_descr.assets.append(asset_descr)
+                asset_descr.metadata['Sox-' + key] = MetaDataValue(type=MetaDataType.STRING, string_value=value)
 
+        file_descr.assets.append(asset_descr)
         return file_descr
