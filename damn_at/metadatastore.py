@@ -1,12 +1,20 @@
 """
 The MetaDataStore handler.
 """
+# Standard
 import os
-from .utilities import is_existing_file, pretty_print_file_description
 
-from damn_at.serialization import SerializeThriftMsg, DeserializeThriftMsg
-
+# Damn
 from damn_at import FileDescription
+from .utilities import (
+    is_existing_file, 
+    pretty_print_file_description
+)
+from damn_at.utilities import is_existing_file
+from damn_at.serialization import (
+    SerializeThriftMsg,
+    DeserializeThriftMsg
+)
 
 
 class MetaDataStoreException(Exception):

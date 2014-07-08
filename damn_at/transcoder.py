@@ -158,9 +158,9 @@ def main():
 
     from damn_at.metadatastore import MetaDataStore
     from damn_at import _CMD_DESCRIPTION
-    
+
     epilog = 'Supported mimetypes: \n'
-    
+
     #Process the positional arguments
     parser = argparse.ArgumentParser(add_help=False, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter,)
     parser.add_argument('path', help='The path to the FileDescription file')
@@ -195,7 +195,7 @@ def main():
         parser.exit(1)
 
     logging.basicConfig(format='%(levelname)s:%(message)s', level=args.loglevel)
-    
+
     t = Transcoder('/tmp/transcoded/')
 
     store_path = os.path.dirname(args.path)
