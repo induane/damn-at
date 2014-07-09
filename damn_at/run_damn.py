@@ -11,6 +11,7 @@ import logging
 
 # Damn
 from damn_at.entry_points.inspect import InspectAsset
+from damn_at.entry_points.transcode import TranscodeAsset
 
 
 def main():
@@ -28,6 +29,8 @@ def main():
 
     if command.lower() == 'inspect':
         InspectAsset()
+    elif command.lower() == 'transcode':
+        TranscodeAsset()
     else:
         print("Unsupported action. Currently supported actions are: %s" % (
             supported_actions

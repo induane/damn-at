@@ -5,7 +5,7 @@ Transcode
 Entry point for transcoding a file.
 """
 # Standard
-import os
+# import os
 import sys
 import logging
 
@@ -29,10 +29,10 @@ class TranscodeAsset(EntryPoint):
         EntryPoint.option(
             '-v',
             '--verbose',
-            help='Be verbose',
             action="store_const",
             dest="loglevel",
-            const=logging.INFO
+            const=logging.INFO,
+            help='Be verbose'
         )
     ]
     help_text = '$ damn transcode INPUT_FILE'
@@ -44,5 +44,8 @@ class TranscodeAsset(EntryPoint):
         """Extract xml from a given document and output as a seperate file"""
         logging.basicConfig(format='%(levelname)s:%(message)s',
                             level=options['loglevel'])
+
+        self.std_out(str(args))
+        self.std_out(str(options))
 
         sys.exit(0)

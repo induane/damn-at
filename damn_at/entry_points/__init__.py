@@ -9,8 +9,7 @@ options and allows for colorized outputs.
 # Standard
 import sys
 import traceback
-from optparse import make_option
-from optparse import OptionParser  # Supports Python 2.6
+from argparse import ArgumentParser
 
 CMD_DESCRIPTION = r'''
  ___   _   __  __ _  _
@@ -19,6 +18,15 @@ CMD_DESCRIPTION = r'''
 |___/_/ \_\_|  |_|_|\_|
     Digital Assets Managed Neatly.
 '''
+
+
+class Option(object):
+    """
+    Uber Basic class for storing arguments for ArgumentParser
+    """
+    def __init__(self, *args, **options):
+        self.args = args
+        self.options = options
 
 
 class EntryPoint(object):
@@ -44,9 +52,6 @@ class EntryPoint(object):
     FAIL = '\033[91m'
     ENDC = '\033[0m'
 
-    # Alias option_constrcution
-    option = make_option
-
     def __init__(self, *args, **kwargs):
         """Setup the basic command and run automated methods"""
         if self.clear_console:
@@ -58,13 +63,22 @@ class EntryPoint(object):
         # Call command runner.
         self._run_command()
 
+    @staticmethod
+    def option(*args, **kwargs):
+        """
+        Create an instance of the options class from the given args
+        """
+        return Option(*args, **kwargs)
+
     def create_parser(self):
         """
-        Create and return an "OptionParser" which will be used to parse the
+        Create and return an "ArgumentParser" which will be used to parse the
         arguments to this command.
         """
-        return OptionParser(prog="damn", usage=self.green(self.help_text),
-                            option_list=self.option_list)
+        parser = ArgumentParser(prog="damn", usage=self.green(self.help_text))
+        for item in self.option_list:
+            parser.add_argument(*item.args, **item.options)
+        return parser
 
     def help(self, exit=True):
         """
@@ -118,7 +132,7 @@ class EntryPoint(object):
         :param show_traceback: display a traceback when an error is detected
         """
         # Get options from command parser
-        (options, arguments) = self.parser.parse_args()
+        (options, arguments) = self.parser.parse_known_args()
 
         # Strip subcommand from arguments list
         base_args = arguments[1:]
