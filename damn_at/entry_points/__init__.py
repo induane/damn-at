@@ -39,6 +39,7 @@ class EntryPoint(object):
     # Command line options - these should be overloaded by subclasses
     option_list = []
     help_text = ''
+    epilog = ''
     name = 'base_command'
     min_args = 0  # If minimum arguments is not met a help message is displayed
     max_args = False  # Specify maximum arg count. False means no limit.
@@ -75,7 +76,11 @@ class EntryPoint(object):
         Create and return an "ArgumentParser" which will be used to parse the
         arguments to this command.
         """
-        parser = ArgumentParser(prog="damn", usage=self.green(self.help_text))
+        parser = ArgumentParser(
+            prog="damn",
+            usage=self.green(self.help_text),
+            epilog=self.green(self.epilog)
+        )
         for item in self.option_list:
             parser.add_argument(*item.args, **item.options)
         return parser
@@ -107,11 +112,10 @@ class EntryPoint(object):
 
         # Verify arguments
         if self.max_args is False:
-            argcheck = (arglen < self.min_args)
+            bad_args = (arglen < self.min_args)
         else:
-            argcheck = (arglen < self.min_args or arglen > self.max_args)
-
-        if argcheck:
+            bad_args = (arglen < self.min_args or arglen > self.max_args)
+        if bad_args:
             self.warning("This command requires at least %s "
                          "arguments but only %s %s found." % (
                              self.min_args,
@@ -122,17 +126,20 @@ class EntryPoint(object):
             self.help(exit=False)
             sys.exit(-1)
 
-    def _run_command(self, show_traceback=True):
+    def _run_command(self):
         """
         Run the command method using the arguments provided from the command
-        parser. Catch any exceptions thrown and display a traceback if the
-        traceback flag is set (default).
+        parser.
 
         :type show_traceback: bool
         :param show_traceback: display a traceback when an error is detected
         """
         # Get options from command parser
-        (options, arguments) = self.parser.parse_known_args()
+        try:
+            (options, arguments) = self.parser.parse_known_args()
+        except:
+            self.error_command()
+            sys.exit(-1)
 
         # Strip subcommand from arguments list
         base_args = arguments[1:]
@@ -144,21 +151,36 @@ class EntryPoint(object):
             self.command(*base_args, **vars(options))
         except Exception as ex:
             # Get Traceback
-            if show_traceback:
-                tb = "".join(traceback.format_exception(sys.exc_info()[0],
-                                                        sys.exc_info()[1],
-                                                        sys.exc_info()[2]))
-            else:
-                tb = ''
+            tb = "".join(traceback.format_exception(sys.exc_info()[0],
+                                                    sys.exc_info()[1],
+                                                    sys.exc_info()[2]))
+
             self.error("Error running command %s.\n%s\n%s" % (
                 self.name,
                 ex,
                 'Traceback:\n%s' % tb if tb else ''
             ))
 
+    def error_command(self):
+        """
+        Called when an error occurs when parsing options. By default prints
+        a simple error including usage text and exits, but can be overloaded.
+        """
+        # Get Traceback
+        tb = "".join(traceback.format_exception(
+            sys.exc_info()[0],
+            sys.exc_info()[1],
+            sys.exc_info()[2]
+        ))
+        self.error("Error running error command %s.\n%s" % (
+            self.name,
+            'Traceback:\n%s' % tb if tb else ''
+        ))
+        sys.exit(-1)
+
     def command(self, *arguments, **options):
         """
-        no command method error
+        No command method error
         """
         header = "Damn:"
         message = (

@@ -157,6 +157,7 @@ class EnumOption(BaseOption):
     def default_description(self):
         return str(self.default)
 
+
 class HexColorOption(BaseOption):
     """Class for #rrggbb Option"""
 
@@ -168,8 +169,8 @@ class HexColorOption(BaseOption):
         matcher = re.compile(r'^#?(([0-9a-fA-F]{2}){3})')
         m = matcher.match(a_string)
         if not m or len(m.groups()) != 2:
-            raise OptionConstraintException('%s not of #rrggbb format!' %(a_string))
-        return '#'+m.group(1)
+            raise OptionConstraintException('%s not of #rrggbb format!' % (a_string))
+        return '#' + m.group(1)
 
     @property
     def type_description(self):
