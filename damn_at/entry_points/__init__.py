@@ -9,8 +9,9 @@ options and allows for colorized outputs.
 # Standard
 import sys
 import traceback
+import contextlib
+from StringIO import StringIO
 from argparse import ArgumentParser
-
 CMD_DESCRIPTION = r'''
  ___   _   __  __ _  _
 |   \ /_\ |  \/  | \| |
@@ -18,6 +19,31 @@ CMD_DESCRIPTION = r'''
 |___/_/ \_\_|  |_|_|\_|
     Digital Assets Managed Neatly.
 '''
+
+
+@contextlib.contextmanager
+def outputIO():
+    """
+    Context manager that replaces standard out and standard error with a single
+    file like object. This is useful for suppressing writes to stderr or stdout
+    that cannot be suppressed by normal means
+    """
+
+    old_out = sys.stdout
+    old_err = sys.stderr
+
+    # Create a file-like object to catch output
+    out_flo = StringIO()
+
+    # Map standard out and standard error to this file like object
+    sys.stdout = out_flo
+    sys.stderr = out_flo
+
+    yield out_flo
+
+    # Reset stdout and stderr to original settings
+    sys.stdout = old_out
+    sys.stderr = old_err
 
 
 class Option(object):
@@ -63,6 +89,12 @@ class EntryPoint(object):
 
         # Call command runner.
         self._run_command()
+
+    def __exit__(self, *args, **kwargs):
+        pass
+
+    def __enter__(self, *args, **kwargs):
+        return self
 
     @staticmethod
     def option(*args, **kwargs):
@@ -134,18 +166,46 @@ class EntryPoint(object):
         :type show_traceback: bool
         :param show_traceback: display a traceback when an error is detected
         """
+        # from argparse import ArgumentError
+        # from argparse import ArgumentTypeError
         # Get options from command parser
-        try:
-            (options, arguments) = self.parser.parse_known_args()
-        except:
+        self.green_out('Getting args...')
+
+        run_error = False
+        with outputIO as output:
+            try:
+                (options, arguments) = self.parser.parse_known_args()
+            except SystemExit:
+                run_error = True
+            except:
+                run_error = True
+
+        if run_error:
             self.error_command()
             sys.exit(-1)
+
+        # try:
+        #     (options, arguments) = self.parser.parse_known_args()
+        # except ArgumentError as ex:
+        #     print("Error: %s" % str(ex))
+        #     sys.exit(-1)
+        #     self.error_command()
+        #     sys.exit(-1)
+        # except ArgumentTypeError:
+        #     print("Other type error")
+        #     sys.exit(-1)
+        # except:
+        #     print('except??')
+        #     sys.exit(-1)
+        # self.green_out('Got arguments.')
 
         # Strip subcommand from arguments list
         base_args = arguments[1:]
 
         # Verify the arguments are valid. This autoexits on bad input.
+        self.green_out('Checking args!')
         self._verify_args(base_args)
+        self.green_out('Args validated!!!!')
 
         try:
             self.command(*base_args, **vars(options))

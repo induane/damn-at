@@ -74,8 +74,6 @@ class TranscodeAsset(EntryPoint):
 
         store_path = os.path.dirname(args.path)
         file_name = os.path.basename(args.path)
-        self.std_out(args.path)
-        self.std_out(dir(args))
 
         m = MetaDataStore(store_path)
 
