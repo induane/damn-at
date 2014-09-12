@@ -3,6 +3,7 @@ The MetaDataStore handler.
 """
 # Standard
 import os
+from .utilities import is_existing_file, pretty_print_file_description
 
 # Damn
 from damn_at import FileDescription
