@@ -54,7 +54,7 @@ class Transcoder(object):
         for plugin in plugin_mgr.getPluginsOfCategory('Transcoder'):
             if plugin.plugin_object.is_activated:
                 for src, _ in plugin.plugin_object.convert_map.items():
-                    if not src in self.transcoders:
+                    if src not in self.transcoders:
                         self.transcoders[src] = []
                     self.transcoders[src].append(plugin)
 
@@ -74,7 +74,7 @@ class Transcoder(object):
                                                     constraint=option.constraint_description,
                                                     default_value=option.default_description)
                         tmt.options.append(tmto)
-                    if not src_mimetype in self.target_mimetypes:
+                    if src_mimetype not in self.target_mimetypes:
                         self.target_mimetypes[src_mimetype] = []
                         self.target_mimetypes_transcoders[src_mimetype] = []
                     self.target_mimetypes[src_mimetype].append(tmt)
@@ -158,10 +158,10 @@ def main():
 
     from damn_at.metadatastore import MetaDataStore
     from damn_at import _CMD_DESCRIPTION
-    
+
     epilog = 'Supported mimetypes: \n'
-    
-    #Process the positional arguments
+
+    # Process the positional arguments
     parser = argparse.ArgumentParser(add_help=False, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter,)
     parser.add_argument('path', help='The path to the FileDescription file')
     parser.add_argument('assetname', help='The subname of the asset to transcoder')
@@ -195,7 +195,7 @@ def main():
         parser.exit(1)
 
     logging.basicConfig(format='%(levelname)s:%(message)s', level=args.loglevel)
-    
+
     t = Transcoder('/tmp/transcoded/')
 
     store_path = os.path.dirname(args.path)
@@ -240,7 +240,7 @@ def main():
             targets = [x.mimetype for x in t.get_target_mimetypes()[asset_id.mimetype]]
             raise TranscoderUnknownTypeException(args.mimetype + ' needs to be one of ' + str(targets))
 
-    #Process the optional arguments
+    # Process the optional arguments
     parser = argparse.ArgumentParser(parents=[parser])
     for option in target_mimetype.options:
         parser.add_argument(
@@ -267,4 +267,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-    #damn_at-transcode /tmp/damn/4bf0356127a51d7e2167433b7e78cedff3f8953a b2csmaterialpanel.png image/jpeg --size=128,128 -h
+    # damn_at-transcode /tmp/damn/4bf0356127a51d7e2167433b7e78cedff3f8953a b2csmaterialpanel.png image/jpeg --size=128,128 -h

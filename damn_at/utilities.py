@@ -6,10 +6,13 @@ import os
 import subprocess
 import glob
 import hashlib
-import wave, struct
+import wave
+import struct
+
 
 def calculate_hash_for_file(an_uri):
-    """Returns a sha1 hexdigest for the given file.
+    """
+    Returns a sha1 hexdigest for the given file.
 
     :param an_uri: the URI pointing to the file
     :rtype: string
@@ -28,7 +31,8 @@ def calculate_hash_for_file(an_uri):
 
 
 def is_existing_file(an_uri):
-    """Returns whether the file exists and it is an actual file.
+    """
+    Returns whether the file exists and it is an actual file.
 
     :param an_uri: the URI pointing to the file
     :rtype: bool
@@ -37,7 +41,8 @@ def is_existing_file(an_uri):
 
 
 def script_path(filename):
-    """b-script-'+__file__+'.py
+    """
+    b-script-'+__file__+'.py
 
     :param filename: __file__
     :rtype: string
@@ -61,7 +66,12 @@ def run_blender(an_uri, script_uri, arguments=[]):
     args = ['blender', "-b", an_uri, '-P', script_uri]
     args.extend(arguments)
 
-    process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+    process = subprocess.Popen(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env
+    )
     stdout, stderr = process.communicate()
     return stdout, stderr, process.returncode
 
@@ -69,8 +79,14 @@ def run_blender(an_uri, script_uri, arguments=[]):
 def collect_python3_paths():
     """Collect python3's 'dist-packages' paths to create PYTHONPATH with"""
     paths = []
-    args = ['python3', "-c", 'import site; [print(x) for x in site.getsitepackages()]']
-    process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    args = ['python3',
+            '-c',
+            'import site; [print(x) for x in site.getsitepackages()]']
+    process = subprocess.Popen(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
     stdout, _ = process.communicate()
     for path in stdout.split('\n'):
         paths.append(path)
@@ -121,7 +137,8 @@ def abspath(path, file_descr=None):
 
 
 def get_metadatavalue_type(value):
-    """Return the name of the type and the value of the MetaDataValue
+    """
+    Return the name of the type and the value of the MetaDataValue
 
     :param value: :py:class:`damn_at.MetaDataValue`
     :rtype: tuple<string,string>
@@ -133,7 +150,8 @@ def get_metadatavalue_type(value):
 
 
 def pretty_print_metadatavalue(key, value, indent=0):
-    """Pretty print a given MetaDataValue
+    """
+    Pretty print a given MetaDataValue
 
     :param key: the name of the MetaDataValue
     :param value: :py:class:`damn_at.MetaDataValue`
@@ -145,7 +163,8 @@ def pretty_print_metadatavalue(key, value, indent=0):
 
 
 def pretty_print_asset_id(asset_id, indent=0):
-    """Pretty print a given AssetId
+    """
+    Pretty print a given AssetId
 
     :param asset_id: :py:class:`damn_at.AssetId`
     :param indent: indentation level
@@ -156,16 +175,20 @@ def pretty_print_asset_id(asset_id, indent=0):
 
 
 def pretty_print_asset_descr(asset_descr, indent=0):
-    """Pretty print a given AssetDescription
+    """
+    Pretty print a given AssetDescription
 
     :param asset_id: :py:class:`damn_at.AssetDescription`
     :param indent: indentation level
     """
     whitespace = ' ' * indent
-    #print(whitespace+''+str(asset_descr))
+    # print(whitespace+''+str(asset_descr))
     pretty_print_asset_id(asset_descr.asset)
     if asset_descr.dependencies:
-        print(whitespace + '  Dependencies (%d):' % len(asset_descr.dependencies))
+        print("%s Dependencies (%d):" % (
+            whitespace,
+            len(asset_descr.dependencies)
+        ))
         for dep in asset_descr.dependencies:
             pretty_print_asset_id(dep, indent + 4)
     if asset_descr.metadata:
@@ -215,6 +238,7 @@ def find_asset_ids_in_file_descr(file_descr, asset_name):
                 asset_ids.append(asset.asset)
     return asset_ids
 
+
 def find_asset_id_in_file_descr(file_descr, asset_name, asset_mimetype):
     """Find an AssetId by name in the given FileDescription
 
@@ -227,6 +251,7 @@ def find_asset_id_in_file_descr(file_descr, asset_name, asset_mimetype):
     if len(asset_ids) == 1:
         return asset_ids[0]
     return
+
 
 def get_asset_names_in_file_descr(file_descr):
     """Get all asset names in the given FileDescription
@@ -241,21 +266,25 @@ def get_asset_names_in_file_descr(file_descr):
 
 
 def unique_asset_id_reference(asset_id):
-    return unique_asset_id_reference_from_fields(asset_id.file.hash, asset_id.subname, asset_id.mimetype)
+    return unique_asset_id_reference_from_fields(
+        asset_id.file.hash,
+        asset_id.subname,
+        asset_id.mimetype
+    )
 
 
 def unique_asset_id_reference_from_fields(file_id_hash, subname, mimetype):
     name = '%s%s%s' % (file_id_hash, subname, mimetype)
-    #return urllib.quote(name.replace('/', '__'))
+    # return urllib.quote(name.replace('/', '__'))
     return name.replace('/', '__')
 
 
 class WaveData():
-    
+
     def __init__(self):
         self.channels = None
         self.nchannels = None
-    
+
     def extractData(self, path, precision):
         stream = wave.open(path, 'rb')
         self.nchannels = stream.getnchannels()
@@ -268,22 +297,22 @@ class WaveData():
         total_samples = self.nchannels*num_frames
 
         if sample_width == 1:
-            fmt = "%iB" % total_samples # read unsigned chars
+            fmt = "%iB" % total_samples  # read unsigned chars
             round_with = 128.0
         elif sample_width == 2:
-            fmt = "%ih" % total_samples # read signed 2 byte shorts
+            fmt = "%ih" % total_samples  # read signed 2 byte shorts
             round_with = 32768.0
         else:
             raise ValueError("Only supports 8 and 16 bit audio formats.")
 
         integer_data = struct.unpack(fmt, raw_data)
-        del raw_data # Keep Memory Tidy
+        del raw_data  # Keep Memory Tidy
 
-        self.channels = [ [] for time in range(self.nchannels) ]
+        self.channels = [[] for time in range(self.nchannels)]
 
-        #As the values are from 0 to 255 for 8 bit files.
-        if sample_width ==1:
-            integer_data = [ val - 128 for val in integer_data ]
+        # As the values are from 0 to 255 for 8 bit files.
+        if sample_width == 1:
+            integer_data = [val - 128 for val in integer_data]
 
         for index, value in enumerate(integer_data):
             bucket = index % self.nchannels
